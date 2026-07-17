@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://alecasgari.github.io/namakdoon-app/sitemap.xml
+Sitemap: https://namakdoon.alecasgari.com/sitemap.xml

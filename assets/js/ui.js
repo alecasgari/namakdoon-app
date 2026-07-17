@@ -1,6 +1,14 @@
 (function () {
   const { toPersianDigits, difficultyLabel, totalTime } = window.NamakScale;
 
+  const PLACEHOLDERS = [
+    "زرشک‌پلو با مرغ...",
+    "جستجو با ماده: زعفران",
+    "تگ: سریع و ساده",
+    "وعده: ناهار",
+    "اسم غذا یا هر چیزی...",
+  ];
+
   function icon(name) {
     const icons = {
       search:
@@ -21,6 +29,8 @@
       book: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 0-2 2V5z"/><path d="M17 3v18"/><path d="M8 7h5M8 11h5"/></svg>',
       panel:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 13h5"/></svg>',
+      close:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
       salt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l2 4H6l2-4z"/><path d="M6 8h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8z"/><path d="M10 12h.01M14 14h.01M12 16h.01"/></svg>',
     };
     return icons[name] || "";
@@ -39,16 +49,17 @@
     document.querySelectorAll("[data-admin-label]").forEach((el) => {
       el.textContent = label;
     });
-    document.querySelectorAll(".nav-links [data-nav='admin']").forEach((el) => {
-      if (!el.querySelector("[data-admin-label]")) el.textContent = label;
-    });
   }
 
   function wireNavLinks() {
     document.querySelectorAll("[data-href]").forEach((el) => {
-      el.setAttribute("href", window.namakPath(el.dataset.href));
+      el.setAttribute("href", window.namakPath(el.getAttribute("data-href") ?? ""));
     });
     updateAuthNav();
+  }
+
+  function goSearch(query) {
+    window.location.href = window.namakSearchUrl(query);
   }
 
   function showToast(message, type = "info") {
@@ -133,6 +144,101 @@
     `;
   }
 
+  function bindSearchForms(root = document) {
+    root.querySelectorAll("[data-global-search]").forEach((form) => {
+      if (form.dataset.bound === "1") return;
+      form.dataset.bound = "1";
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = form.querySelector("[data-search-input]");
+        goSearch(input?.value || "");
+        closeSearchModal();
+      });
+    });
+  }
+
+  function animatePlaceholders(root = document) {
+    root.querySelectorAll("[data-search-input]").forEach((input) => {
+      if (input.dataset.phAnim === "1") return;
+      input.dataset.phAnim = "1";
+      let i = 0;
+      const tick = () => {
+        if (document.activeElement === input || input.value) return;
+        input.setAttribute("placeholder", PLACEHOLDERS[i % PLACEHOLDERS.length]);
+        i += 1;
+      };
+      tick();
+      setInterval(tick, 2600);
+    });
+  }
+
+  function ensureSearchModal() {
+    let modal = document.querySelector("[data-search-modal]");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.className = "search-modal";
+    modal.setAttribute("data-search-modal", "");
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="search-modal-backdrop" data-close-search></div>
+      <div class="search-modal-sheet" role="dialog" aria-modal="true" aria-label="جستجو">
+        <div class="search-modal-head">
+          <strong>جستجو در نمکدون</strong>
+          <button type="button" class="icon-btn" data-close-search aria-label="بستن">${icon("close")}</button>
+        </div>
+        <form class="hero-search modal-search" data-global-search novalidate>
+          <div class="hero-search-shell">
+            <span class="hero-search-icon">${icon("search")}</span>
+            <input type="search" name="q" data-search-input autocomplete="off" enterkeyhint="search" placeholder="عنوان، تگ، ماده یا اسم غذا..." aria-label="جستجوی دستور" />
+            <button type="submit" class="hero-search-btn">برو</button>
+          </div>
+          <div class="hero-search-hints">
+            <button type="button" class="hint-chip" data-hint="مرغ">مرغ</button>
+            <button type="button" class="hint-chip" data-hint="ناهار">ناهار</button>
+            <button type="button" class="hint-chip" data-hint="سریع">سریع</button>
+            <button type="button" class="hint-chip" data-hint="برنج">برنج</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelectorAll("[data-close-search]").forEach((el) => {
+      el.addEventListener("click", closeSearchModal);
+    });
+    modal.querySelectorAll("[data-hint]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const input = modal.querySelector("[data-search-input]");
+        if (input) input.value = btn.dataset.hint || "";
+        goSearch(btn.dataset.hint || "");
+      });
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSearchModal();
+    });
+    bindSearchForms(modal);
+    animatePlaceholders(modal);
+    return modal;
+  }
+
+  function openSearchModal() {
+    const modal = ensureSearchModal();
+    modal.hidden = false;
+    document.body.classList.add("search-open");
+    requestAnimationFrame(() => modal.classList.add("is-open"));
+    const input = modal.querySelector("[data-search-input]");
+    setTimeout(() => input?.focus(), 180);
+  }
+
+  function closeSearchModal() {
+    const modal = document.querySelector("[data-search-modal]");
+    if (!modal) return;
+    modal.classList.remove("is-open");
+    document.body.classList.remove("search-open");
+    setTimeout(() => {
+      modal.hidden = true;
+    }, 220);
+  }
+
   function mountMobileTabbar() {
     if (document.querySelector(".mobile-tabbar")) return;
     const nav = document.createElement("nav");
@@ -140,7 +246,7 @@
     nav.setAttribute("aria-label", "منوی موبایل");
     nav.innerHTML = `
       <div class="mobile-tabbar-inner">
-        <a class="tabbar-item" data-nav="home" data-href="index/">
+        <a class="tabbar-item" data-nav="home" data-href="">
           <span class="tabbar-icon">${icon("home")}</span>
           <span class="tabbar-label">خانه</span>
         </a>
@@ -148,18 +254,22 @@
           <span class="tabbar-icon">${icon("book")}</span>
           <span class="tabbar-label">دستورها</span>
         </a>
-        <a class="tabbar-item tabbar-item-accent" data-nav="admin" data-href="admin/">
-          <span class="tabbar-icon">${icon("panel")}</span>
-          <span class="tabbar-label" data-admin-label>ورود</span>
-        </a>
+        <button type="button" class="tabbar-item tabbar-item-accent" data-open-search>
+          <span class="tabbar-icon">${icon("search")}</span>
+          <span class="tabbar-label">جستجو</span>
+        </button>
       </div>
     `;
     document.body.appendChild(nav);
+    nav.querySelector("[data-open-search]")?.addEventListener("click", openSearchModal);
   }
 
   function mountShell() {
     mountMobileTabbar();
+    ensureSearchModal();
     wireNavLinks();
+    bindSearchForms(document);
+    animatePlaceholders(document);
     setActiveNav();
     const year = document.querySelector("[data-year]");
     if (year) year.textContent = toPersianDigits(new Date().getFullYear());
@@ -174,6 +284,9 @@
     showToast,
     mountShell,
     updateAuthNav,
+    openSearchModal,
+    closeSearchModal,
+    goSearch,
     difficultyLabel,
   };
 })();

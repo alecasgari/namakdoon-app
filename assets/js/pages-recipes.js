@@ -42,7 +42,21 @@
       const tagOk = activeTag === "all" || (r.tags || []).includes(activeTag);
       if (!tagOk) return false;
       if (!q) return true;
-      const hay = [r.title, r.description, r.meal_type, ...(r.tags || [])]
+      const ingredientText = (r.ingredients || [])
+        .map((item) =>
+          typeof item === "string"
+            ? item
+            : [item.name, item.unit, item.note].filter(Boolean).join(" ")
+        )
+        .join(" ");
+      const hay = [
+        r.title,
+        r.description,
+        r.meal_type,
+        r.tips,
+        ...(r.tags || []),
+        ingredientText,
+      ]
         .join(" ")
         .toLowerCase();
       return hay.includes(q);

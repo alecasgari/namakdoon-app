@@ -1,9 +1,8 @@
 (async function () {
   const grid = document.querySelector("[data-home-grid]");
   const countEl = document.querySelector("[data-recipe-count]");
-  if (!grid) return;
-
   window.NamakUI.mountShell();
+  if (!grid) return;
 
   try {
     const recipes = await window.NamakAPI.listRecipes();

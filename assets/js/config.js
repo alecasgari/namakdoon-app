@@ -1,6 +1,5 @@
 /**
  * Namakdoon site + API config
- * When you attach namakdoon.alecasgari.com, set basePath to "" and update siteUrl.
  */
 (function () {
   const host = window.location.hostname;
@@ -34,7 +33,19 @@
   };
 
   window.namakPath = function (path) {
-    const clean = String(path || "").replace(/^\//, "");
-    return `${window.NAMAKDOON.basePath}/${clean}`.replace(/\/{2,}/g, "/");
+    const clean = String(path ?? "")
+      .replace(/^\//, "")
+      .replace(/^\.\//, "");
+    if (!clean) {
+      return basePath ? `${basePath}/` : "/";
+    }
+    const joined = `${basePath}/${clean}`.replace(/\/{2,}/g, "/");
+    return joined.startsWith("/") ? joined : `/${joined}`;
+  };
+
+  window.namakSearchUrl = function (query) {
+    const q = String(query || "").trim();
+    const base = window.namakPath("recipes/");
+    return q ? `${base}?q=${encodeURIComponent(q)}` : base;
   };
 })();
