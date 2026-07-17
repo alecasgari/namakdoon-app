@@ -1,0 +1,119 @@
+﻿<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>نمکدون | دستورهای آشپزی ساده و خوش‌طعم</title>
+    <meta
+      name="description"
+      content="نمکدون، مجموعه شخصی دستورهای آشپزی فارسی. دستورها را ببینید و مواد را بر اساس تعداد نفرات تنظیم کنید."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#2f6b5a" />
+    <link rel="canonical" href="https://alecasgari.github.io/namakdoon-app/index/" />
+    <link rel="alternate" hreflang="fa" href="https://alecasgari.github.io/namakdoon-app/index/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fa_IR" />
+    <meta property="og:site_name" content="نمکدون" />
+    <meta property="og:title" content="نمکدون | دستورهای آشپزی ساده و خوش‌طعم" />
+    <meta
+      property="og:description"
+      content="دستورهای فارسی، مقیاس‌پذیر برای تعداد نفرات، با جستجو و فیلتر تگ."
+    />
+    <meta property="og:url" content="https://alecasgari.github.io/namakdoon-app/index/" />
+    <meta property="og:image" content="https://alecasgari.github.io/namakdoon-app/assets/img/og-cover.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="نمکدون" />
+    <meta name="twitter:description" content="دستورهای آشپزی فارسی، ساده و موبایل‌فرست." />
+    <meta name="twitter:image" content="https://alecasgari.github.io/namakdoon-app/assets/img/og-cover.svg" />
+    <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/css/peyda.css" />
+    <link rel="stylesheet" href="../assets/css/main.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "نمکدون",
+        "url": "https://alecasgari.github.io/namakdoon-app/index/",
+        "inLanguage": "fa",
+        "description": "مجموعه دستورهای آشپزی فارسی",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://alecasgari.github.io/namakdoon-app/recipes/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+  </head>
+  <body data-page="home">
+    <div class="page">
+      <header class="site-header">
+        <div class="container nav">
+          <a class="brand" data-href="index/" aria-label="نمکدون">
+            <span class="brand-mark" data-brand-icon></span>
+            <span class="brand-text">
+              <strong>نمکدون</strong>
+              <small>آشپزی ساده‌تر</small>
+            </span>
+          </a>
+          <button class="menu-toggle" type="button" aria-label="منو">منو</button>
+          <nav class="nav-links" aria-label="منوی اصلی">
+            <a data-nav="home" data-href="index/">خانه</a>
+            <a data-nav="recipes" data-href="recipes/">دستورها</a>
+            <a class="nav-cta" data-nav="admin" data-href="admin/"><span data-admin-label>ورود</span></a>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-bg" role="img" aria-label="پس‌زمینه آشپزخانه نمکدون"></div>
+          <div class="container hero-content">
+            <p class="hero-brand"><span aria-hidden="true"></span> نمکدون</p>
+            <h1>دستورهایی که واقعاً می‌پزید</h1>
+            <p>از گفت‌وگو با AI تا یک دستور مرتب فارسی؛ برای چند نفر بپزید، مواد را همان‌جا مقیاس کنید.</p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" data-href="recipes/">مشاهده دستورها</a>
+              <a class="btn btn-secondary" data-href="admin/">ورود ادمین</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="container">
+            <div class="section-head">
+              <div>
+                <h2>تازه‌ترین دستورها</h2>
+                <p><span data-recipe-count>۰</span> دستور در نمکدون</p>
+              </div>
+              <a class="btn btn-ghost" data-href="recipes/">همه دستورها</a>
+            </div>
+            <div class="recipe-grid" data-home-grid>
+              <div class="loading">در حال بارگذاری...</div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-grid">
+          <div>
+            <strong>نمکدون</strong>
+            <div>دستورهای فارسی، ساده و قابل مقیاس</div>
+          </div>
+          <div>© <span data-year></span> Alec Asgari</div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/recipe-scale.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/ui.js"></script>
+    <script src="../assets/js/nav.js"></script>
+    <script>
+      document.querySelector("[data-brand-icon]").innerHTML = window.NamakUI.icon("salt");
+    </script>
+    <script src="../assets/js/pages-home.js"></script>
+  </body>
+</html>

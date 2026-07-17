@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f4d42"/>
+      <stop offset="100%" stop-color="#c47b17"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="300" fill="#fff8ea" font-family="Tahoma, Arial" font-size="96" font-weight="700">FE©/HF</text>
+  <text x="80" y="380" fill="#ffe8b8" font-family="Tahoma, Arial" font-size="36">/3*H1G'Ì "4~2Ì 3'/G H .H479E</text>
+</svg>

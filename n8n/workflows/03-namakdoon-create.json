@@ -1,0 +1,442 @@
+{
+  "name": "Namakdoon - Create Recipe",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "namakdoon-create",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "create-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [200, 360],
+      "webhookId": "namakdoon-create"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "adminToken",
+              "value": "={{ $json.headers['x-admin-token'] || $json.headers['X-Admin-Token'] || $json.adminToken || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "text",
+              "value": "={{ $json.text || $json.body?.text || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "hasAudio",
+              "value": "={{ !!$binary?.audio }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {
+          "includeBinary": true
+        }
+      },
+      "id": "create-prepare",
+      "name": "Prepare Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [420, 360]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-auth",
+              "leftValue": "={{ $json.adminToken }}",
+              "rightValue": "CHANGE_ME_ADMIN_TOKEN",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "create-auth",
+      "name": "Auth OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [640, 360]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"دسترسی غیرمجاز\" } }}",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "create-unauthorized",
+      "name": "Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 560]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c-audio",
+              "leftValue": "={{ $json.hasAudio }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "create-has-audio",
+      "name": "Has Audio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, 280]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "models/gemini-flash-lite-latest"
+        },
+        "text": "این فایل صوتی را کامل به متن فارسی پیاده‌سازی کن. اگر محتوا انگلیسی بود، به فارسی برگردان. فقط متن گفت‌وگو یا دستور را برگردان.",
+        "inputType": "binary",
+        "binaryPropertyName": "audio",
+        "simplify": true,
+        "options": {
+          "maxOutputTokens": 4096
+        }
+      },
+      "id": "create-analyze",
+      "name": "Analyze Audio",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [1120, 160],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "sourceText",
+              "value": "={{ [$('Prepare Input').item.json.text, ($json.content?.parts?.[0]?.text || $json.mergedResponse || '')].filter(Boolean).join('\\n\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-text-from-audio",
+      "name": "Source From Audio",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1360, 160]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s2",
+              "name": "sourceText",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-text-only",
+      "name": "Source From Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1120, 360]
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "models/gemini-flash-lite-latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=تو یک استخراج‌کننده دستور آشپزی هستی. متن زیر را به یک دستور کامل و مرتب فارسی تبدیل کن. اگر متن انگلیسی بود همه فیلدها را فارسی برگردان. فقط JSON معتبر برگردان با ساختار زیر و هیچ متن دیگری ننویس:\n{\n  \"slug\": \"english-kebab-case\",\n  \"title\": \"\",\n  \"description\": \"\",\n  \"ingredients\": [{\"name\":\"\",\"amount\":1,\"unit\":\"\",\"note\":\"\"}],\n  \"steps\": [{\"text\":\"\"}],\n  \"prep_time\": 0,\n  \"cook_time\": 0,\n  \"servings_base\": 4,\n  \"meal_type\": \"ناهار\",\n  \"tags\": [\"\"],\n  \"tips\": \"\",\n  \"calories\": 0,\n  \"difficulty\": \"متوسط\"\n}\nقوانین:\n- amount حتما عدد باشد تا بعداً مقیاس شود\n- difficulty یکی از: آسان، متوسط، سخت\n- servings_base اگر مشخص نبود 4 بگذار\n\nمتن ورودی:\n{{ $json.sourceText }}",
+              "role": "user"
+            }
+          ]
+        },
+        "simplify": true,
+        "jsonOutput": true,
+        "options": {}
+      },
+      "id": "create-structure",
+      "name": "Structure Recipe",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [1580, 260],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "m0",
+              "name": "parsed",
+              "value": "={{ JSON.parse($json.content.parts[0].text) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-parse",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1800, 260]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "slug",
+              "value": "={{ $json.parsed.slug || ('recipe-' + Date.now()) }}",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "title",
+              "value": "={{ $json.parsed.title }}",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "description",
+              "value": "={{ $json.parsed.description || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "r4",
+              "name": "ingredients",
+              "value": "={{ JSON.stringify($json.parsed.ingredients || []) }}",
+              "type": "string"
+            },
+            {
+              "id": "r5",
+              "name": "steps",
+              "value": "={{ JSON.stringify($json.parsed.steps || []) }}",
+              "type": "string"
+            },
+            {
+              "id": "r6",
+              "name": "prep_time",
+              "value": "={{ Number($json.parsed.prep_time) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "r7",
+              "name": "cook_time",
+              "value": "={{ Number($json.parsed.cook_time) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "r8",
+              "name": "servings_base",
+              "value": "={{ Number($json.parsed.servings_base) || 4 }}",
+              "type": "number"
+            },
+            {
+              "id": "r9",
+              "name": "meal_type",
+              "value": "={{ $json.parsed.meal_type || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "r10",
+              "name": "tags",
+              "value": "={{ JSON.stringify($json.parsed.tags || []) }}",
+              "type": "string"
+            },
+            {
+              "id": "r11",
+              "name": "tips",
+              "value": "={{ $json.parsed.tips || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "r12",
+              "name": "calories",
+              "value": "={{ Number($json.parsed.calories) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "r13",
+              "name": "difficulty",
+              "value": "={{ $json.parsed.difficulty || 'متوسط' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-map",
+      "name": "Map Recipe Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2020, 260]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "namakdoon_recipes"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "create-insert",
+      "name": "Insert Recipe",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [2240, 260]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"recipe\": $json } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "create-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2460, 260]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Prepare Input", "type": "main", "index": 0 }]]
+    },
+    "Prepare Input": {
+      "main": [[{ "node": "Auth OK?", "type": "main", "index": 0 }]]
+    },
+    "Auth OK?": {
+      "main": [
+        [{ "node": "Has Audio?", "type": "main", "index": 0 }],
+        [{ "node": "Unauthorized", "type": "main", "index": 0 }]
+      ]
+    },
+    "Has Audio?": {
+      "main": [
+        [{ "node": "Analyze Audio", "type": "main", "index": 0 }],
+        [{ "node": "Source From Text", "type": "main", "index": 0 }]
+      ]
+    },
+    "Analyze Audio": {
+      "main": [[{ "node": "Source From Audio", "type": "main", "index": 0 }]]
+    },
+    "Source From Audio": {
+      "main": [[{ "node": "Structure Recipe", "type": "main", "index": 0 }]]
+    },
+    "Source From Text": {
+      "main": [[{ "node": "Structure Recipe", "type": "main", "index": 0 }]]
+    },
+    "Structure Recipe": {
+      "main": [[{ "node": "Parse JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse JSON": {
+      "main": [[{ "node": "Map Recipe Fields", "type": "main", "index": 0 }]]
+    },
+    "Map Recipe Fields": {
+      "main": [[{ "node": "Insert Recipe", "type": "main", "index": 0 }]]
+    },
+    "Insert Recipe": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

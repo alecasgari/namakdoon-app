@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>همه دستورها | نمکدون</title>
+    <meta
+      name="description"
+      content="فهرست کامل دستورهای آشپزی نمکدون با جستجو و فیلتر بر اساس تگ."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#2f6b5a" />
+    <link rel="canonical" href="https://alecasgari.github.io/namakdoon-app/recipes/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fa_IR" />
+    <meta property="og:title" content="همه دستورها | نمکدون" />
+    <meta property="og:description" content="جستجو و مرور دستورهای فارسی نمکدون." />
+    <meta property="og:url" content="https://alecasgari.github.io/namakdoon-app/recipes/" />
+    <meta property="og:image" content="https://alecasgari.github.io/namakdoon-app/assets/img/og-cover.svg" />
+    <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/css/peyda.css" />
+    <link rel="stylesheet" href="../assets/css/main.css" />
+  </head>
+  <body data-page="recipes">
+    <div class="page">
+      <header class="site-header">
+        <div class="container nav">
+          <a class="brand" data-href="index/" aria-label="نمکدون">
+            <span class="brand-mark" data-brand-icon></span>
+            <span class="brand-text">
+              <strong>نمکدون</strong>
+              <small>آشپزی ساده‌تر</small>
+            </span>
+          </a>
+          <button class="menu-toggle" type="button" aria-label="منو">منو</button>
+          <nav class="nav-links" aria-label="منوی اصلی">
+            <a data-nav="home" data-href="index/">خانه</a>
+            <a data-nav="recipes" data-href="recipes/">دستورها</a>
+            <a class="nav-cta" data-nav="admin" data-href="admin/"><span data-admin-label>ورود</span></a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="container">
+        <div class="page-title">
+          <h1>دستورهای نمکدون</h1>
+          <p>جستجو کنید، با تگ فیلتر کنید و دستور دلخواه را باز کنید.</p>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            <span aria-hidden="true" data-search-icon></span>
+            <input data-search type="search" placeholder="جستجوی عنوان، تگ یا وعده..." />
+          </label>
+          <div class="filters" data-filters></div>
+        </div>
+
+        <div class="recipe-grid" data-recipes-grid>
+          <div class="loading">در حال بارگذاری...</div>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-grid">
+          <div><strong>نمکدون</strong></div>
+          <div>© <span data-year></span> Alec Asgari</div>
+        </div>
+      </footer>
+    </div>
+
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/recipe-scale.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/ui.js"></script>
+    <script src="../assets/js/nav.js"></script>
+    <script>
+      document.querySelector("[data-brand-icon]").innerHTML = window.NamakUI.icon("salt");
+      document.querySelector("[data-search-icon]").innerHTML = window.NamakUI.icon("search");
+      const q = new URLSearchParams(location.search).get("q");
+      if (q) document.querySelector("[data-search]").value = q;
+    </script>
+    <script src="../assets/js/pages-recipes.js"></script>
+  </body>
+</html>

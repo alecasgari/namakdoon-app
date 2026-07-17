@@ -1,0 +1,259 @@
+{
+  "name": "Namakdoon - Update Recipe",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "namakdoon-update",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "update-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [220, 320],
+      "webhookId": "namakdoon-update"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "u1",
+              "name": "adminToken",
+              "value": "={{ $json.headers['x-admin-token'] || $json.headers['X-Admin-Token'] || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "u2",
+              "name": "id",
+              "value": "={{ $json.body?.id || $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "u3",
+              "name": "title",
+              "value": "={{ $json.body?.title || $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "u4",
+              "name": "description",
+              "value": "={{ $json.body?.description || $json.description || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "u5",
+              "name": "ingredients",
+              "value": "={{ JSON.stringify($json.body?.ingredients || $json.ingredients || []) }}",
+              "type": "string"
+            },
+            {
+              "id": "u6",
+              "name": "steps",
+              "value": "={{ JSON.stringify($json.body?.steps || $json.steps || []) }}",
+              "type": "string"
+            },
+            {
+              "id": "u7",
+              "name": "prep_time",
+              "value": "={{ Number($json.body?.prep_time ?? $json.prep_time) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "u8",
+              "name": "cook_time",
+              "value": "={{ Number($json.body?.cook_time ?? $json.cook_time) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "u9",
+              "name": "servings_base",
+              "value": "={{ Number($json.body?.servings_base ?? $json.servings_base) || 4 }}",
+              "type": "number"
+            },
+            {
+              "id": "u10",
+              "name": "meal_type",
+              "value": "={{ $json.body?.meal_type || $json.meal_type || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "u11",
+              "name": "tags",
+              "value": "={{ JSON.stringify($json.body?.tags || $json.tags || []) }}",
+              "type": "string"
+            },
+            {
+              "id": "u12",
+              "name": "tips",
+              "value": "={{ $json.body?.tips || $json.tips || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "u13",
+              "name": "calories",
+              "value": "={{ Number($json.body?.calories ?? $json.calories) || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "u14",
+              "name": "difficulty",
+              "value": "={{ $json.body?.difficulty || $json.difficulty || 'متوسط' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-prepare",
+      "name": "Prepare Update",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 320]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ua",
+              "leftValue": "={{ $json.adminToken }}",
+              "rightValue": "CHANGE_ME_ADMIN_TOKEN",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "update-auth",
+      "name": "Auth OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [700, 320]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"دسترسی غیرمجاز\" } }}",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "update-unauthorized",
+      "name": "Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 500]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "namakdoon_recipes"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.title }}",
+            "description": "={{ $json.description }}",
+            "ingredients": "={{ $json.ingredients }}",
+            "steps": "={{ $json.steps }}",
+            "prep_time": "={{ $json.prep_time }}",
+            "cook_time": "={{ $json.cook_time }}",
+            "servings_base": "={{ $json.servings_base }}",
+            "meal_type": "={{ $json.meal_type }}",
+            "tags": "={{ $json.tags }}",
+            "tips": "={{ $json.tips }}",
+            "calories": "={{ $json.calories }}",
+            "difficulty": "={{ $json.difficulty }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "update-row",
+      "name": "Update Recipe Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [960, 240]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"recipe\": $json } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "update-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 240]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Prepare Update", "type": "main", "index": 0 }]]
+    },
+    "Prepare Update": {
+      "main": [[{ "node": "Auth OK?", "type": "main", "index": 0 }]]
+    },
+    "Auth OK?": {
+      "main": [
+        [{ "node": "Update Recipe Row", "type": "main", "index": 0 }],
+        [{ "node": "Unauthorized", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update Recipe Row": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
