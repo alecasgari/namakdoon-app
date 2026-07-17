@@ -105,7 +105,7 @@
             {
               "id": "r1",
               "name": "url",
-              "value": "=https://namakdoon.alecasgari.com/media/{{ $json.fileName }}",
+              "value": "=https://n8n.alecasgari.com/media/{{ $json.fileName }}",
               "type": "string"
             },
             {

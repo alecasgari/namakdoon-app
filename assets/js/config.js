@@ -21,7 +21,7 @@
     siteUrl,
     basePath,
     apiBase: "https://n8n.alecasgari.com/webhook",
-    mediaBase: "https://namakdoon.alecasgari.com/media",
+    mediaBase: "https://n8n.alecasgari.com/media",
     endpoints: {
       list: "/namakdoon-list",
       get: "/namakdoon-get",
