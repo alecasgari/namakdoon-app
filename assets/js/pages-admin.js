@@ -172,13 +172,15 @@
               <div style="display:flex;align-items:center;gap:.6rem;justify-content:center">
                 <strong>ضبط ویس یا آپلود فایل</strong>
               </div>
-              <div style="display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center">
-                <button type="button" class="btn btn-dark" data-record-toggle>${window.NamakUI.icon("mic")} شروع ضبط</button>
-                <label class="btn btn-ghost" style="cursor:pointer">
-                  انتخاب فایل
+              <div class="record-actions">
+                <button type="button" class="btn btn-icon btn-record" data-record-toggle aria-label="شروع ضبط">
+                  <span class="record-dot" aria-hidden="true"></span>
+                </button>
+                <label class="btn btn-ghost btn-icon" style="cursor:pointer" aria-label="انتخاب فایل صدا" title="انتخاب فایل">
+                  ${window.NamakUI.icon("upload")}
                   <input type="file" accept="audio/*" data-audio-file hidden />
                 </label>
-                <button type="button" class="btn btn-ghost" data-clear-audio>پاک کردن صدا</button>
+                <button type="button" class="btn btn-ghost btn-icon" data-clear-audio aria-label="پاک کردن صدا" title="پاک کردن صدا">${window.NamakUI.icon("trash")}</button>
               </div>
               <div class="status-line" data-audio-status style="text-align:center">صدایی انتخاب نشده</div>
             </div>
@@ -595,13 +597,15 @@
           recordedBlob = new Blob(chunks, { type: "audio/webm" });
           statusAudio.textContent = "ویس ضبط شد و آماده ارسال است.";
           box.classList.remove("is-recording");
-          toggle.innerHTML = `${window.NamakUI.icon("mic")} شروع ضبط`;
+          toggle.setAttribute("aria-label", "شروع ضبط");
+          toggle.innerHTML = `<span class="record-dot" aria-hidden="true"></span>`;
           stopMeter();
           stream.getTracks().forEach((t) => t.stop());
         };
         mediaRecorder.start();
         box.classList.add("is-recording");
-        toggle.innerHTML = `${window.NamakUI.icon("mic")} توقف ضبط`;
+        toggle.setAttribute("aria-label", "توقف ضبط");
+        toggle.innerHTML = `<span class="record-dot" aria-hidden="true"></span>`;
         statusAudio.textContent = "در حال ضبط... با صدای شما موجک تکان می‌خورد.";
         startMeter(stream);
       } catch {
