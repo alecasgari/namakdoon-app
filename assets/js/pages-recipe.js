@@ -4,11 +4,22 @@
   window.NamakUI.mountShell();
 
   const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  if (!id) {
+  let slug = (params.get("slug") || "").trim();
+  let id = (params.get("id") || "").trim();
+
+  // Support path-style /recipe/<slug>/ if ever rewritten here
+  if (!slug && !id) {
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    const recipeIdx = parts.indexOf("recipe");
+    if (recipeIdx >= 0 && parts[recipeIdx + 1]) {
+      slug = decodeURIComponent(parts[recipeIdx + 1]);
+    }
+  }
+
+  if (!slug && !id) {
     root.innerHTML = window.NamakUI.emptyState(
       "دستور پیدا نشد",
-      "شناسه دستور در آدرس موجود نیست."
+      "آدرس دستور ناقص است."
     );
     return;
   }
@@ -16,14 +27,78 @@
   let recipe = null;
   let servings = 4;
 
+  function setMeta(name, content, attr = "name") {
+    if (!content) return;
+    let el = document.querySelector(`meta[${attr}="${name}"]`);
+    if (!el) {
+      el = document.createElement("meta");
+      el.setAttribute(attr, name);
+      document.head.appendChild(el);
+    }
+    el.setAttribute("content", content);
+  }
+
+  function syncSeo(r) {
+    const { siteUrl, defaultOgImage } = window.NAMAKDOON;
+    const pageUrl = window.namakAbsoluteUrl(window.namakRecipeUrl(r));
+    const image =
+      window.NamakAPI.mediaUrl(r.image_url) ||
+      window.NamakAPI.mediaUrl(r.video_url) ||
+      defaultOgImage;
+    const description = r.description || `${r.title} — دستور آشپزی در نمکدون`;
+
+    document.title = `${r.title} | نمکدون`;
+    setMeta("description", description);
+    setMeta("robots", "index,follow,max-image-preview:large");
+    setMeta("og:type", "article", "property");
+    setMeta("og:locale", "fa_IR", "property");
+    setMeta("og:site_name", "نمکدون", "property");
+    setMeta("og:title", `${r.title} | نمکدون`, "property");
+    setMeta("og:description", description, "property");
+    setMeta("og:url", pageUrl, "property");
+    setMeta("og:image", image, "property");
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", r.title);
+    setMeta("twitter:description", description);
+    setMeta("twitter:image", image);
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", pageUrl);
+
+    if (window.history?.replaceState) {
+      const next = window.namakRecipeUrl(r);
+      if (`${window.location.pathname}${window.location.search}` !== next) {
+        window.history.replaceState({}, "", next);
+      }
+    }
+  }
+
   function syncJsonLd(r) {
     const el = document.getElementById("recipe-jsonld");
     if (!el) return;
+    const image =
+      window.NamakAPI.mediaUrl(r.image_url) ||
+      window.NamakAPI.mediaUrl(r.video_url) ||
+      undefined;
+    const pageUrl = window.namakAbsoluteUrl(window.namakRecipeUrl(r));
     const data = {
       "@context": "https://schema.org",
       "@type": "Recipe",
       name: r.title,
       description: r.description,
+      url: pageUrl,
+      image: image ? [image] : undefined,
+      inLanguage: "fa",
+      author: {
+        "@type": "Organization",
+        name: "نمکدون",
+        url: window.NAMAKDOON.siteUrl,
+      },
       recipeYield: `${r.servings_base} نفر`,
       prepTime: `PT${r.prep_time || 0}M`,
       cookTime: `PT${r.cook_time || 0}M`,
@@ -46,8 +121,40 @@
             calories: `${r.calories} کالری`,
           }
         : undefined,
+      video: window.NamakAPI.mediaUrl(r.video_url)
+        ? {
+            "@type": "VideoObject",
+            name: r.title,
+            contentUrl: window.NamakAPI.mediaUrl(r.video_url),
+            thumbnailUrl: window.NamakAPI.mediaUrl(r.image_url) || undefined,
+          }
+        : undefined,
     };
     el.textContent = JSON.stringify(data);
+  }
+
+  function mediaHtml(r) {
+    const { escapeHtml } = window.NamakUI;
+    const image = window.NamakAPI.mediaUrl(r.image_url);
+    const video = window.NamakAPI.mediaUrl(r.video_url);
+    if (!image && !video) return "";
+    const parts = [];
+    if (image) {
+      parts.push(`
+        <button type="button" class="media-zoom" data-lightbox="${escapeHtml(image)}" aria-label="بزرگ‌نمایی عکس">
+          <img class="media-thumb" src="${escapeHtml(image)}" alt="${escapeHtml(r.title)}" />
+          <span class="media-zoom-hint">برای بزرگ‌نمایی لمس کنید</span>
+        </button>
+      `);
+    }
+    if (video) {
+      parts.push(`
+        <div class="recipe-video">
+          <video class="media-video" src="${escapeHtml(video)}" controls playsinline preload="metadata"></video>
+        </div>
+      `);
+    }
+    return `<div class="recipe-media">${parts.join("")}</div>`;
   }
 
   function render() {
@@ -59,24 +166,13 @@
     const { escapeHtml, icon, difficultyLabel } = window.NamakUI;
     const { toPersianDigits, totalTime } = window.NamakScale;
 
-    document.title = `${recipe.title} | نمکدون`;
-    const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", recipe.description || recipe.title);
+    syncSeo(recipe);
     syncJsonLd(recipe);
 
     root.innerHTML = `
       <section class="recipe-hero reveal">
         <div class="panel recipe-title-block">
-          ${
-            window.NamakAPI.mediaUrl(recipe.image_url) ||
-            window.NamakAPI.mediaUrl(recipe.video_url)
-              ? `<div class="recipe-media">${
-                  window.NamakAPI.mediaUrl(recipe.image_url)
-                    ? `<img class="media-thumb" src="${escapeHtml(window.NamakAPI.mediaUrl(recipe.image_url))}" alt="${escapeHtml(recipe.title)}" />`
-                    : `<video class="media-thumb" src="${escapeHtml(window.NamakAPI.mediaUrl(recipe.video_url))}" controls playsinline></video>`
-                }</div>`
-              : ""
-          }
+          ${mediaHtml(recipe)}
           <div class="recipe-card-top">
             <span class="meal-badge">${escapeHtml(recipe.meal_type || "وعده")}</span>
           </div>
@@ -140,6 +236,7 @@
     `;
 
     window.NamakUI.observeReveals(root);
+    window.NamakUI.bindLightbox(root);
     root.querySelectorAll("[data-servings-delta]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const delta = Number(btn.dataset.servingsDelta);
@@ -151,7 +248,7 @@
 
   root.innerHTML = `<div class="loading">در حال بارگذاری دستور...</div>`;
   try {
-    recipe = await window.NamakAPI.getRecipe(id);
+    recipe = await window.NamakAPI.getRecipe(slug ? { slug } : { id });
     if (!recipe) throw new Error("دستور پیدا نشد.");
     servings = recipe.servings_base || 4;
     render();

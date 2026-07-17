@@ -8,6 +8,19 @@
     <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./assets/css/peyda.css" />
     <link rel="stylesheet" href="./assets/css/main.css" />
+    <script>
+      (function () {
+        try {
+          var parts = location.pathname.split("/").filter(Boolean);
+          var i = parts.indexOf("recipe");
+          if (i >= 0 && parts[i + 1]) {
+            var slug = decodeURIComponent(parts[i + 1]);
+            location.replace("/recipe/?slug=" + encodeURIComponent(slug));
+            return;
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div class="page">

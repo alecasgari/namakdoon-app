@@ -36,6 +36,8 @@
         '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 15-4.5-4.5L9 18"/></svg>',
       video:
         '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/></svg>',
+      sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+      moon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z"/></svg>',
     };
     return icons[name] || "";
   }
@@ -85,7 +87,7 @@
   }
 
   function recipeCard(recipe) {
-    const href = window.namakPath(`recipe/?id=${encodeURIComponent(recipe.id)}`);
+    const href = window.namakRecipeUrl(recipe);
     const tags = (recipe.tags || [])
       .slice(0, 3)
       .map((t) => `<span class="chip">${escapeHtml(t)}</span>`)
@@ -276,9 +278,106 @@
     nav.querySelector("[data-open-search]")?.addEventListener("click", openSearchModal);
   }
 
+  function ensureLightbox() {
+    let box = document.querySelector("[data-lightbox-modal]");
+    if (box) return box;
+    box = document.createElement("div");
+    box.className = "lightbox";
+    box.setAttribute("data-lightbox-modal", "");
+    box.hidden = true;
+    box.innerHTML = `
+      <div class="lightbox-backdrop" data-lightbox-close></div>
+      <div class="lightbox-sheet" role="dialog" aria-modal="true" aria-label="پیش‌نمایش تصویر">
+        <button type="button" class="icon-btn lightbox-close" data-lightbox-close aria-label="بستن">${icon("close")}</button>
+        <img data-lightbox-img alt="" />
+      </div>
+    `;
+    document.body.appendChild(box);
+    box.querySelectorAll("[data-lightbox-close]").forEach((el) => {
+      el.addEventListener("click", closeLightbox);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeLightbox();
+    });
+    return box;
+  }
+
+  function openLightbox(src, alt = "") {
+    if (!src) return;
+    const box = ensureLightbox();
+    const img = box.querySelector("[data-lightbox-img]");
+    img.src = src;
+    img.alt = alt || "تصویر دستور";
+    box.hidden = false;
+    document.body.classList.add("lightbox-open");
+    requestAnimationFrame(() => box.classList.add("is-open"));
+  }
+
+  function closeLightbox() {
+    const box = document.querySelector("[data-lightbox-modal]");
+    if (!box) return;
+    box.classList.remove("is-open");
+    document.body.classList.remove("lightbox-open");
+    setTimeout(() => {
+      box.hidden = true;
+      const img = box.querySelector("[data-lightbox-img]");
+      if (img) img.removeAttribute("src");
+    }, 200);
+  }
+
+  function bindLightbox(root = document) {
+    root.querySelectorAll("[data-lightbox]").forEach((el) => {
+      if (el.dataset.lightboxBound === "1") return;
+      el.dataset.lightboxBound = "1";
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openLightbox(el.getAttribute("data-lightbox") || el.src, el.alt || "");
+      });
+    });
+  }
+
+  function getTheme() {
+    const key = window.NAMAKDOON?.themeKey || "namakdoon_theme";
+    const saved = localStorage.getItem(key);
+    if (saved === "dark" || saved === "light") return saved;
+    return "light";
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    const key = window.NAMAKDOON?.themeKey || "namakdoon_theme";
+    localStorage.setItem(key, next);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", next === "dark" ? "#121614" : "#2f6b5a");
+    document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
+      const dark = next === "dark";
+      btn.setAttribute("aria-label", dark ? "حالت روشن" : "حالت تاریک");
+      btn.innerHTML = dark ? icon("sun") : icon("moon");
+    });
+  }
+
+  function mountThemeToggle() {
+    document.querySelectorAll(".nav-links").forEach((nav) => {
+      if (nav.querySelector("[data-theme-toggle]")) return;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "theme-toggle";
+      btn.setAttribute("data-theme-toggle", "");
+      btn.addEventListener("click", () => {
+        applyTheme(getTheme() === "dark" ? "light" : "dark");
+      });
+      nav.appendChild(btn);
+    });
+    applyTheme(getTheme());
+  }
+
   function mountShell() {
     mountMobileTabbar();
     ensureSearchModal();
+    ensureLightbox();
+    mountThemeToggle();
     wireNavLinks();
     bindSearchForms(document);
     animatePlaceholders(document);
@@ -300,5 +399,10 @@
     closeSearchModal,
     goSearch,
     difficultyLabel,
+    bindLightbox,
+    openLightbox,
+    closeLightbox,
+    applyTheme,
+    getTheme,
   };
 })();

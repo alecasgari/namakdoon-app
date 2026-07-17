@@ -28,12 +28,29 @@ ls
 cp docker-compose.yml docker-compose.yml.bak-$(date +%F)
 ```
 
-### الف) به سرویس n8n یک volume اضافه کن
+### الف) به سرویس n8n یک volume + env اجازه نوشتن اضافه کن
 
-زیر `services:` → سرویس n8n (اسمش معمولاً `n8n` است) در بخش `volumes:` این خط را **اضافه** کن (خط‌های قبلی را پاک نکن):
+زیر `services:` → سرویس n8n (اسمش معمولاً `n8n` است):
+
+1) در بخش `environment:` این خط را **اضافه** کن (بدون این، n8n 2.x مسیر مدیا را بلاک می‌کند و خطای `is not writable` می‌دهد حتی اگر `touch` کار کند):
+
+```yaml
+      - N8N_RESTRICT_FILE_ACCESS_TO=/home/node/.n8n-files;/home/node/namakdoon-media
+```
+
+2) در بخش `volumes:` این خط را **اضافه** کن (خط‌های قبلی را پاک نکن):
 
 ```yaml
       - ./namakdoon-media:/home/node/namakdoon-media
+```
+
+بعد:
+
+```bash
+cd ~/n8n
+sudo chown -R 1000:1000 namakdoon-media
+sudo chmod 775 namakdoon-media
+docker compose up -d --force-recreate n8n
 ```
 
 ### ب) یک سرویس خیلی کوچک فقط برای سرو فایل اضافه کن
@@ -106,6 +123,7 @@ docker ps --filter name=n8n
 1. ایمپورت و Active کردن `07-namakdoon-upload.json`
 2. توکن Auth را مثل بقیه روی همان مقدار ثابت بگذار
 3. مسیر Write File باید باشد: `/home/node/namakdoon-media/...` (در ورکفلو از قبل همین است)
+4. اگر خطای `is not writable` دیدی ولی `docker exec n8n-app touch /home/node/namakdoon-media/x` کار کرد → حتماً `N8N_RESTRICT_FILE_ACCESS_TO` را طبق بخش ۲ تنظیم و n8n را recreate کن
 
 ## ۵) تست
 

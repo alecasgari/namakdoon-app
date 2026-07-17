@@ -139,8 +139,18 @@
       const rows = Array.isArray(data) ? data : data?.recipes || data?.data || [];
       return rows.map(normalizeRecipe).filter(Boolean);
     },
-    async getRecipe(id) {
-      const data = await request(endpoints.get, { query: { id } });
+    async getRecipe(idOrOpts) {
+      const opts =
+        idOrOpts && typeof idOrOpts === "object"
+          ? idOrOpts
+          : { id: idOrOpts };
+      const query = {};
+      if (opts.slug) query.slug = opts.slug;
+      else if (opts.id) query.id = opts.id;
+      const data = await request(endpoints.get, { query });
+      if (data?.error && !data?.recipe) {
+        throw new Error(data.error);
+      }
       const row = data?.recipe || data?.data || data;
       return normalizeRecipe(row);
     },

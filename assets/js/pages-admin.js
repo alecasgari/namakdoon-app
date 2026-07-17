@@ -203,6 +203,7 @@
         <div class="stack">
           <input type="hidden" id="edit-id" />
           <div class="field"><label for="edit-title">عنوان</label><input id="edit-title" /></div>
+          <div class="field"><label for="edit-slug">اسلاگ آدرس</label><input id="edit-slug" placeholder="مثلا khoresh-gheymeh" dir="ltr" /></div>
           <div class="field"><label for="edit-description">توضیح</label><textarea id="edit-description"></textarea></div>
           <div class="field"><label for="edit-meal">وعده</label><input id="edit-meal" placeholder="ناهار / شام / ..." /></div>
           <div class="field"><label for="edit-difficulty">سختی</label>
@@ -345,6 +346,7 @@
     card.hidden = false;
     root.querySelector("#edit-id").value = recipe.id;
     root.querySelector("#edit-title").value = recipe.title || "";
+    root.querySelector("#edit-slug").value = recipe.slug || "";
     root.querySelector("#edit-description").value = recipe.description || "";
     root.querySelector("#edit-meal").value = recipe.meal_type || "";
     root.querySelector("#edit-difficulty").value =
@@ -385,6 +387,7 @@
     body.innerHTML = `
       ${mediaBits.join("")}
       <div class="field"><label>عنوان</label><input data-prev-title value="${escapeHtml(recipe.title || "")}" /></div>
+      <div class="field"><label>اسلاگ آدرس</label><input data-prev-slug value="${escapeHtml(recipe.slug || window.namakSlugify(recipe.title) || "")}" dir="ltr" /></div>
       <div class="field"><label>توضیح</label><textarea data-prev-description>${escapeHtml(recipe.description || "")}</textarea></div>
       <div class="field"><label>وعده</label><input data-prev-meal value="${escapeHtml(recipe.meal_type || "")}" /></div>
       <div class="field"><label>مواد لازم</label><div data-prev-ingredients-host>${window.NamakFields.ingredientsEditorHtml(recipe.ingredients || [])}</div></div>
@@ -414,7 +417,11 @@
       .map((t) => t.trim())
       .filter(Boolean);
     return {
-      slug: previewDraft?.slug || `recipe-${Date.now()}`,
+      slug:
+        body.querySelector("[data-prev-slug]")?.value.trim() ||
+        window.namakSlugify(body.querySelector("[data-prev-title]")?.value) ||
+        previewDraft?.slug ||
+        `recipe-${Date.now()}`,
       title: body.querySelector("[data-prev-title]")?.value.trim() || "",
       description: body.querySelector("[data-prev-description]")?.value.trim() || "",
       meal_type: body.querySelector("[data-prev-meal]")?.value.trim() || "",
@@ -532,6 +539,10 @@
           .filter(Boolean);
         await window.NamakAPI.updateRecipe(id, {
           title: root.querySelector("#edit-title").value.trim(),
+          slug:
+            root.querySelector("#edit-slug").value.trim() ||
+            window.namakSlugify(root.querySelector("#edit-title").value) ||
+            id,
           description: root.querySelector("#edit-description").value.trim(),
           meal_type: root.querySelector("#edit-meal").value.trim(),
           difficulty: root.querySelector("#edit-difficulty").value,

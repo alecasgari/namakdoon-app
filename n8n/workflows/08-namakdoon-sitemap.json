@@ -1,0 +1,94 @@
+{
+  "name": "Namakdoon - Sitemap",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "namakdoon-sitemap",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "sitemap-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "webhookId": "namakdoon-sitemap"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "namakdoon_recipes"
+        },
+        "returnAll": true,
+        "orderBy": true,
+        "orderByColumn": "updatedAt",
+        "orderByDirection": "DESC"
+      },
+      "id": "sitemap-get",
+      "name": "Get All Recipes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [500, 300],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const recipes = $input.all().map(i => i.json).filter(r => r && r.id);\nconst esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');\nconst urls = recipes.map((r) => {\n  const slug = String(r.slug || r.id).trim();\n  const loc = `https://namakdoon.alecasgari.com/recipe/?slug=${encodeURIComponent(slug)}`;\n  const lastmod = (r.updatedAt || r.updated_at || r.createdAt || r.created_at || '').toString().slice(0, 10);\n  return `  <url>\\n    <loc>${esc(loc)}</loc>\\n    ${lastmod ? `<lastmod>${esc(lastmod)}</lastmod>\\n    ` : ''}<changefreq>weekly</changefreq>\\n    <priority>0.8</priority>\\n  </url>`;\n}).join('\\n');\nconst xml = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\\n${urls}\\n</urlset>`;\nreturn [{ json: { xml } }];"
+      },
+      "id": "sitemap-build",
+      "name": "Build XML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.xml }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/xml; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "public, max-age=600"
+              }
+            ]
+          }
+        }
+      },
+      "id": "sitemap-respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1020, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Get All Recipes", "type": "main", "index": 0 }]]
+    },
+    "Get All Recipes": {
+      "main": [[{ "node": "Build XML", "type": "main", "index": 0 }]]
+    },
+    "Build XML": {
+      "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

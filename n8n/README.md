@@ -32,12 +32,13 @@ CHANGE_ME_ADMIN_TOKEN
 2. این فایل‌ها را ایمپورت کنید:
 
 - `workflows/01-namakdoon-list.json`
-- `workflows/02-namakdoon-get.json`
+- `workflows/02-namakdoon-get.json` ← پشتیبانی `id` و `slug`
 - `workflows/03-namakdoon-create.json`
 - `workflows/04-namakdoon-update.json`
 - `workflows/05-namakdoon-delete.json`
 - `workflows/06-namakdoon-auth.json` ← برای چک کردن توکن قبل از ورود به پنل
 - `workflows/07-namakdoon-upload.json` ← آپلود عکس/ویدیو روی دیسک سرور
+- `workflows/08-namakdoon-sitemap.json` ← سایت‌مپ داینامیک دستورها
 
 3. در Create: Credential جمینای را به نودهای Gemini وصل کنید
 4. توکن ثابت را در همه ورکفلوهای ادمین یکسان کنید

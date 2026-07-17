@@ -40,6 +40,12 @@
               "type": "string"
             },
             {
+              "id": "u3b",
+              "name": "slug",
+              "value": "={{ $json.body?.slug || $json.slug || '' }}",
+              "type": "string"
+            },
+            {
               "id": "u4",
               "name": "description",
               "value": "={{ $json.body?.description || $json.description || '' }}",
@@ -201,6 +207,7 @@
           "mappingMode": "defineBelow",
           "value": {
             "title": "={{ $json.title }}",
+            "slug": "={{ $json.slug }}",
             "description": "={{ $json.description }}",
             "ingredients": "={{ $json.ingredients }}",
             "steps": "={{ $json.steps }}",
