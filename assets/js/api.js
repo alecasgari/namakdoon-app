@@ -164,14 +164,35 @@
       });
     },
     async uploadMedia(file, kind) {
+      if (!file) throw new Error("فایلی برای آپلود انتخاب نشده است.");
       const form = new FormData();
       form.append("kind", kind || "image");
       form.append("file", file, file.name || `${kind || "file"}.bin`);
-      return request(endpoints.upload, {
+      const data = await request(endpoints.upload, {
         method: "POST",
         admin: true,
         body: form,
       });
+      const payload = Array.isArray(data) ? data[0] : data;
+      if (!payload || typeof payload !== "object") {
+        throw new Error("پاسخ آپلود نامعتبر بود. ورک‌فلو Upload را چک کنید.");
+      }
+      const uploadedUrl =
+        payload.url ||
+        payload.path ||
+        payload.mediaUrl ||
+        payload?.data?.url ||
+        payload?.data?.path ||
+        "";
+      if (!uploadedUrl) {
+        throw new Error(
+          "آپلود انجام شد ولی آدرس فایل برنگشت. ورک‌فلو Upload را دوباره Active کنید."
+        );
+      }
+      return {
+        url: uploadedUrl,
+        path: payload.path || uploadedUrl,
+      };
     },
     async updateRecipe(id, payload) {
       return request(endpoints.update, {

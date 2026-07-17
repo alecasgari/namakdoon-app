@@ -13,6 +13,129 @@
   let previewDraft = null;
   let pendingImageFile = null;
   let pendingVideoFile = null;
+  let pendingImageUrl = "";
+  let pendingVideoUrl = "";
+
+  function mediaDropHtml({ kind, inputAttr }) {
+    const isImage = kind === "image";
+    const title = isImage ? "عکس (اختیاری)" : "ویدیو (اختیاری)";
+    const hint = isImage ? "PNG، JPG یا WebP" : "MP4، WebM یا MOV";
+    const accept = isImage ? "image/*" : "video/*";
+    const iconName = isImage ? "image" : "video";
+    return `
+      <div class="media-drop" data-media-kind="${kind}">
+        <input type="file" accept="${accept}" ${inputAttr} hidden />
+        <div class="media-drop-empty" data-media-empty>
+          <span class="media-drop-icon">${window.NamakUI.icon(iconName)}</span>
+          <strong>${title}</strong>
+          <span class="status-line">${hint}</span>
+          <button type="button" class="btn btn-ghost" data-media-pick>انتخاب فایل</button>
+        </div>
+        <div class="media-drop-preview" data-media-preview hidden>
+          ${
+            isImage
+              ? `<img class="media-drop-thumb" alt="پیش‌نمایش عکس" data-media-thumb />`
+              : `<video class="media-drop-thumb" controls playsinline data-media-thumb></video>`
+          }
+          <div class="media-drop-bar">
+            <span class="media-drop-name" data-media-name></span>
+            <button type="button" class="btn btn-ghost" data-media-clear>حذف</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function revokeUrl(url) {
+    if (url && String(url).startsWith("blob:")) URL.revokeObjectURL(url);
+  }
+
+  function setDropPreview(drop, file, objectUrl) {
+    const empty = drop.querySelector("[data-media-empty]");
+    const preview = drop.querySelector("[data-media-preview]");
+    const thumb = drop.querySelector("[data-media-thumb]");
+    const name = drop.querySelector("[data-media-name]");
+    if (!file || !objectUrl) {
+      empty.hidden = false;
+      preview.hidden = true;
+      if (thumb) {
+        if (thumb.tagName === "VIDEO") {
+          thumb.removeAttribute("src");
+          thumb.load?.();
+        } else {
+          thumb.removeAttribute("src");
+        }
+      }
+      if (name) name.textContent = "";
+      return;
+    }
+    empty.hidden = true;
+    preview.hidden = false;
+    thumb.src = objectUrl;
+    name.textContent = file.name;
+  }
+
+  function clearCreateMedia() {
+    revokeUrl(pendingImageUrl);
+    revokeUrl(pendingVideoUrl);
+    pendingImageFile = null;
+    pendingVideoFile = null;
+    pendingImageUrl = "";
+    pendingVideoUrl = "";
+    root.querySelectorAll("input[data-image-file], input[data-video-file]").forEach((input) => {
+      const drop = input.closest("[data-media-kind]");
+      input.value = "";
+      if (drop) setDropPreview(drop, null, "");
+    });
+  }
+
+  function bindMediaDrop(drop, onChange) {
+    const input = drop.querySelector('input[type="file"]');
+    const pick = drop.querySelector("[data-media-pick]");
+    const clear = drop.querySelector("[data-media-clear]");
+    let localUrl = "";
+
+    const applyFile = (file) => {
+      revokeUrl(localUrl);
+      localUrl = file ? URL.createObjectURL(file) : "";
+      setDropPreview(drop, file || null, localUrl);
+      onChange(file || null, localUrl);
+    };
+
+    pick?.addEventListener("click", () => input?.click());
+    drop.addEventListener("click", (e) => {
+      if (e.target.closest("button, video, a")) return;
+      if (!drop.querySelector("[data-media-preview]")?.hidden) return;
+      input?.click();
+    });
+    drop.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      drop.classList.add("is-drag");
+    });
+    drop.addEventListener("dragleave", () => drop.classList.remove("is-drag"));
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      drop.classList.remove("is-drag");
+      const file = e.dataTransfer?.files?.[0];
+      if (!file || !input) return;
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+      } catch {
+        /* some browsers block assigning input.files */
+      }
+      applyFile(file);
+    });
+    input?.addEventListener("change", () => {
+      applyFile(input.files?.[0] || null);
+    });
+    clear?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      input.value = "";
+      applyFile(null);
+    });
+  }
 
   function tokenForm() {
     return `
@@ -59,14 +182,8 @@
               </div>
               <div class="status-line" data-audio-status style="text-align:center">صدایی انتخاب نشده</div>
             </div>
-            <div class="field">
-              <label>عکس (اختیاری)</label>
-              <input type="file" accept="image/*" data-image-file />
-            </div>
-            <div class="field">
-              <label>ویدیو (اختیاری)</label>
-              <input type="file" accept="video/*" data-video-file />
-            </div>
+            ${mediaDropHtml({ kind: "image", inputAttr: 'data-image-file' })}
+            ${mediaDropHtml({ kind: "video", inputAttr: 'data-video-file' })}
             <button type="button" class="btn btn-primary" data-create>${window.NamakUI.icon("plus")} ساخت پیش‌نمایش</button>
             <div class="status-line" data-create-status></div>
           </div>
@@ -105,8 +222,8 @@
           <div class="field"><label for="edit-tips">نکات</label><textarea id="edit-tips"></textarea></div>
           <div class="field"><label for="edit-image-url">آدرس عکس</label><input id="edit-image-url" placeholder="اختیاری" /></div>
           <div class="field"><label for="edit-video-url">آدرس ویدیو</label><input id="edit-video-url" placeholder="اختیاری" /></div>
-          <div class="field"><label>آپلود عکس جدید</label><input type="file" accept="image/*" data-edit-image-file /></div>
-          <div class="field"><label>آپلود ویدیو جدید</label><input type="file" accept="video/*" data-edit-video-file /></div>
+          ${mediaDropHtml({ kind: "image", inputAttr: 'data-edit-image-file' })}
+          ${mediaDropHtml({ kind: "video", inputAttr: 'data-edit-video-file' })}
           <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <button type="button" class="btn btn-primary" data-save-edit>ذخیره تغییرات</button>
             <button type="button" class="btn btn-ghost" data-cancel-edit>انصراف</button>
@@ -122,12 +239,16 @@
             <strong>پیش‌نمایش دستور</strong>
             <button type="button" class="icon-btn" data-close-preview aria-label="بستن">${window.NamakUI.icon("close")}</button>
           </div>
-          <div class="stack" data-preview-body></div>
-          <div class="preview-actions">
-            <button type="button" class="btn btn-primary" data-confirm-publish>تأیید و انتشار</button>
-            <button type="button" class="btn btn-ghost" data-close-preview>انصراف</button>
+          <div class="preview-modal-scroll">
+            <div class="stack" data-preview-body></div>
           </div>
-          <div class="status-line" data-preview-status></div>
+          <div class="preview-modal-foot">
+            <div class="preview-actions">
+              <button type="button" class="btn btn-primary" data-confirm-publish>تأیید و انتشار</button>
+              <button type="button" class="btn btn-ghost" data-close-preview>انصراف</button>
+            </div>
+            <div class="status-line" data-preview-status></div>
+          </div>
         </div>
       </div>
     `;
@@ -250,7 +371,19 @@
     const modal = root.querySelector("[data-preview-modal]");
     const body = root.querySelector("[data-preview-body]");
     const { escapeHtml } = window.NamakUI;
+    const mediaBits = [];
+    if (pendingImageUrl) {
+      mediaBits.push(
+        `<div class="preview-media"><img src="${escapeHtml(pendingImageUrl)}" alt="پیش‌نمایش عکس" /></div>`
+      );
+    }
+    if (pendingVideoUrl) {
+      mediaBits.push(
+        `<div class="preview-media"><video src="${escapeHtml(pendingVideoUrl)}" controls playsinline></video></div>`
+      );
+    }
     body.innerHTML = `
+      ${mediaBits.join("")}
       <div class="field"><label>عنوان</label><input data-prev-title value="${escapeHtml(recipe.title || "")}" /></div>
       <div class="field"><label>توضیح</label><textarea data-prev-description>${escapeHtml(recipe.description || "")}</textarea></div>
       <div class="field"><label>وعده</label><input data-prev-meal value="${escapeHtml(recipe.meal_type || "")}" /></div>
@@ -263,12 +396,14 @@
     window.NamakFields.bindIngredientsEditor(body.querySelector("[data-prev-ingredients-host]"));
     window.NamakFields.bindStepsEditor(body.querySelector("[data-prev-steps-host]"));
     modal.hidden = false;
+    document.body.classList.add("preview-open");
     root.querySelector("[data-preview-status]").textContent = "";
   }
 
   function closePreview() {
     const modal = root.querySelector("[data-preview-modal]");
     if (modal) modal.hidden = true;
+    document.body.classList.remove("preview-open");
     previewDraft = null;
   }
 
@@ -318,35 +453,58 @@
       el.addEventListener("click", closePreview);
     });
 
+    const createImageDrop = root.querySelector('[data-media-kind="image"] input[data-image-file]')?.closest("[data-media-kind]");
+    const createVideoDrop = root.querySelector('[data-media-kind="video"] input[data-video-file]')?.closest("[data-media-kind]");
+    if (createImageDrop) {
+      bindMediaDrop(createImageDrop, (file, url) => {
+        pendingImageFile = file;
+        pendingImageUrl = url || "";
+      });
+    }
+    if (createVideoDrop) {
+      bindMediaDrop(createVideoDrop, (file, url) => {
+        pendingVideoFile = file;
+        pendingVideoUrl = url || "";
+      });
+    }
+
+    root.querySelectorAll("[data-edit-card] [data-media-kind]").forEach((drop) => {
+      bindMediaDrop(drop, () => {});
+    });
+
     root.querySelector("[data-confirm-publish]")?.addEventListener("click", async () => {
       const status = root.querySelector("[data-preview-status]");
+      const btn = root.querySelector("[data-confirm-publish]");
       status.textContent = "در حال انتشار...";
+      btn.disabled = true;
       try {
         const payload = readPreviewPayload();
         if (!payload.title) throw new Error("عنوان لازم است.");
         if (pendingImageFile) {
+          status.textContent = "در حال آپلود عکس...";
           const up = await window.NamakAPI.uploadMedia(pendingImageFile, "image");
           payload.image_url = up.url || up.path || "";
         }
         if (pendingVideoFile) {
+          status.textContent = "در حال آپلود ویدیو...";
           const up = await window.NamakAPI.uploadMedia(pendingVideoFile, "video");
           payload.video_url = up.url || up.path || "";
         }
+        status.textContent = "در حال انتشار...";
         await window.NamakAPI.publishRecipe(payload);
         status.textContent = "منتشر شد.";
         window.NamakUI.showToast("دستور منتشر شد");
         closePreview();
         root.querySelector("#recipe-text").value = "";
         recordedBlob = null;
-        pendingImageFile = null;
-        pendingVideoFile = null;
+        clearCreateMedia();
         root.querySelector("[data-audio-status]").textContent = "صدایی انتخاب نشده";
-        root.querySelector("[data-image-file]").value = "";
-        root.querySelector("[data-video-file]").value = "";
         await refresh();
       } catch (err) {
         status.textContent = err.message;
         window.NamakUI.showToast(err.message, "error");
+      } finally {
+        btn.disabled = false;
       }
     });
 
@@ -450,13 +608,6 @@
       if (fileInput) fileInput.value = "";
     });
 
-    root.querySelector("[data-image-file]")?.addEventListener("change", (e) => {
-      pendingImageFile = e.target.files?.[0] || null;
-    });
-    root.querySelector("[data-video-file]")?.addEventListener("change", (e) => {
-      pendingVideoFile = e.target.files?.[0] || null;
-    });
-
     root.querySelector("[data-create]")?.addEventListener("click", async () => {
       const text = root.querySelector("#recipe-text").value.trim();
       const status = root.querySelector("[data-create-status]");
@@ -516,6 +667,7 @@
 
   async function mount() {
     const token = window.NamakAPI.getAdminToken();
+    document.body.classList.remove("preview-open");
     if (!token) {
       root.innerHTML = tokenForm();
       window.NamakUI.observeReveals(root);

@@ -105,13 +105,13 @@
             {
               "id": "r1",
               "name": "url",
-              "value": "=https://n8n.alecasgari.com/media/{{ $json.fileName }}",
+              "value": "=https://n8n.alecasgari.com/media/{{ $('Prepare Upload').item.json.fileName }}",
               "type": "string"
             },
             {
               "id": "r2",
               "name": "path",
-              "value": "={{ $json.fileName }}",
+              "value": "={{ $('Prepare Upload').item.json.fileName }}",
               "type": "string"
             }
           ]
