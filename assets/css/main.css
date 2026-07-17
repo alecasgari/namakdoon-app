@@ -1065,6 +1065,11 @@ body.search-open {
     display: none !important;
   }
 
+  .theme-toggle {
+    display: inline-grid !important;
+    margin-inline-start: auto;
+  }
+
   .page {
     padding-bottom: calc(var(--tabbar-h) + 1.4rem);
   }

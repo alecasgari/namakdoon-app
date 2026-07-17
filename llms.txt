@@ -6,7 +6,8 @@
 - خانه: https://namakdoon.alecasgari.com/
 - فهرست دستورها: https://namakdoon.alecasgari.com/recipes/
 - جستجو: https://namakdoon.alecasgari.com/recipes/?q={query}
-- جزئیات دستور: https://namakdoon.alecasgari.com/recipe/?slug={slug}
+- جزئیات دستور: https://namakdoon.alecasgari.com/recipe/{slug}/
+
 
 ## نکات برای مدل‌های زبانی
 - زبان محتوا: فارسی (fa-IR)

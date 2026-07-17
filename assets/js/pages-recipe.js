@@ -4,10 +4,10 @@
   window.NamakUI.mountShell();
 
   const params = new URLSearchParams(window.location.search);
-  let slug = (params.get("slug") || "").trim();
+  let slug = (params.get("slug") || window.__NAMAK_PATH_SLUG__ || "").trim();
   let id = (params.get("id") || "").trim();
 
-  // Support path-style /recipe/<slug>/ if ever rewritten here
+  // Path-style: /recipe/<slug>/
   if (!slug && !id) {
     const parts = window.location.pathname.split("/").filter(Boolean);
     const recipeIdx = parts.indexOf("recipe");

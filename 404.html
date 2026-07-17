@@ -3,36 +3,105 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>صفحه پیدا نشد | نمکدون</title>
-    <meta name="robots" content="noindex" />
-    <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./assets/css/peyda.css" />
-    <link rel="stylesheet" href="./assets/css/main.css" />
+    <title>نمکدون</title>
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="theme-color" content="#2f6b5a" />
+    <meta property="og:site_name" content="نمکدون" />
+    <meta property="og:type" content="article" />
+    <meta property="og:locale" content="fa_IR" />
+    <meta property="og:image" content="https://namakdoon.alecasgari.com/assets/img/og-cover.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://namakdoon.alecasgari.com/assets/img/og-cover.png" />
+    <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/peyda.css" />
+    <link rel="stylesheet" href="/assets/css/main.css" />
     <script>
       (function () {
         try {
-          var parts = location.pathname.split("/").filter(Boolean);
-          var i = parts.indexOf("recipe");
-          if (i >= 0 && parts[i + 1]) {
-            var slug = decodeURIComponent(parts[i + 1]);
-            location.replace("/recipe/?slug=" + encodeURIComponent(slug));
-            return;
+          if (localStorage.getItem("namakdoon_theme") === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
           }
         } catch (e) {}
+        var parts = location.pathname.split("/").filter(Boolean);
+        var i = parts.indexOf("recipe");
+        var slug = i >= 0 && parts[i + 1] ? decodeURIComponent(parts[i + 1]) : "";
+        window.__NAMAK_PATH_SLUG__ = slug || "";
+        if (!slug) document.title = "صفحه پیدا نشد | نمکدون";
       })();
     </script>
+    <script id="recipe-jsonld" type="application/ld+json">{}</script>
   </head>
-  <body>
-    <div class="page">
+  <body data-page="recipes">
+    <div class="page" data-recipe-shell hidden>
+      <header class="site-header">
+        <div class="container nav">
+          <a class="brand" data-href="" aria-label="نمکدون">
+            <span class="brand-mark" data-brand-icon></span>
+            <span class="brand-text">
+              <strong>نمکدون</strong>
+              <small>آشپزی ساده‌تر</small>
+            </span>
+          </a>
+          <nav class="nav-links" aria-label="منوی اصلی">
+            <a data-nav="home" data-href="">خانه</a>
+            <a data-nav="recipes" data-href="recipes/">دستورها</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="container" style="padding-bottom:1.5rem">
+        <div class="page-title">
+          <a class="status-line" data-href="recipes/">← بازگشت به فهرست</a>
+        </div>
+        <div data-recipe-root>
+          <div class="loading">در حال بارگذاری...</div>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-grid">
+          <div><strong>نمکدون</strong></div>
+          <div class="footer-meta">
+            <a data-href="admin/" data-admin-label>ورود</a>
+            <span>© <span data-year></span> Alec Asgari</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <div class="page" data-notfound-shell hidden>
       <main class="container" style="padding:3rem 0">
         <div class="empty-state">
           <h1>۴۰۴</h1>
           <p>این صفحه در نمکدون پیدا نشد.</p>
           <p style="margin-top:1rem">
-            <a class="btn btn-primary" href="./">بازگشت به خانه</a>
+            <a class="btn btn-primary" href="/">بازگشت به خانه</a>
           </p>
         </div>
       </main>
     </div>
+
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/recipe-scale.js"></script>
+    <script src="/assets/js/api.js"></script>
+    <script src="/assets/js/ui.js"></script>
+    <script src="/assets/js/nav.js"></script>
+    <script>
+      (function () {
+        var slug = window.__NAMAK_PATH_SLUG__ || "";
+        var recipeShell = document.querySelector("[data-recipe-shell]");
+        var notFound = document.querySelector("[data-notfound-shell]");
+        if (slug) {
+          recipeShell.hidden = false;
+          document.querySelector("[data-brand-icon]").innerHTML = window.NamakUI.icon("salt");
+          var s = document.createElement("script");
+          s.src = "/assets/js/pages-recipe.js";
+          document.body.appendChild(s);
+        } else {
+          notFound.hidden = false;
+          document.querySelector('meta[name="robots"]')?.setAttribute("content", "noindex");
+        }
+      })();
+    </script>
   </body>
 </html>

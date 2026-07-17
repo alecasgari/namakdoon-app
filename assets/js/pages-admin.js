@@ -198,7 +198,7 @@
         </section>
       </div>
 
-      <section class="admin-card reveal" data-edit-card hidden style="margin-top:1rem">
+      <section class="admin-card" data-edit-card hidden style="margin-top:1rem">
         <h2>ویرایش دستور</h2>
         <div class="stack">
           <input type="hidden" id="edit-id" />
@@ -344,6 +344,9 @@
     if (!recipe) return;
     const card = root.querySelector("[data-edit-card]");
     card.hidden = false;
+    card.classList.remove("reveal");
+    card.style.opacity = "1";
+    card.style.transform = "none";
     root.querySelector("#edit-id").value = recipe.id;
     root.querySelector("#edit-title").value = recipe.title || "";
     root.querySelector("#edit-slug").value = recipe.slug || "";
@@ -365,7 +368,9 @@
     stepHost.innerHTML = window.NamakFields.stepsEditorHtml(recipe.steps);
     window.NamakFields.bindIngredientsEditor(ingHost);
     window.NamakFields.bindStepsEditor(stepHost);
-    card.scrollIntoView({ behavior: "smooth", block: "start" });
+    requestAnimationFrame(() => {
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   function openPreview(recipe) {

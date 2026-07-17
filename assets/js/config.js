@@ -71,13 +71,13 @@
   window.namakRecipeUrl = function (recipe) {
     if (!recipe) return window.namakPath("recipe/");
     const slug = String(recipe.slug || "").trim();
-    if (slug && slug !== String(recipe.id)) {
-      return window.namakPath(`recipe/?slug=${encodeURIComponent(slug)}`);
-    }
     if (slug) {
-      return window.namakPath(`recipe/?slug=${encodeURIComponent(slug)}`);
+      return window.namakPath(`recipe/${encodeURIComponent(slug)}/`);
     }
-    return window.namakPath(`recipe/?id=${encodeURIComponent(recipe.id)}`);
+    if (recipe.id) {
+      return window.namakPath(`recipe/?id=${encodeURIComponent(recipe.id)}`);
+    }
+    return window.namakPath("recipe/");
   };
 
   window.namakAbsoluteUrl = function (pathOrUrl) {

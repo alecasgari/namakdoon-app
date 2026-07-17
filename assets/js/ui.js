@@ -359,7 +359,7 @@
   }
 
   function mountThemeToggle() {
-    document.querySelectorAll(".nav-links").forEach((nav) => {
+    document.querySelectorAll(".site-header .nav").forEach((nav) => {
       if (nav.querySelector("[data-theme-toggle]")) return;
       const btn = document.createElement("button");
       btn.type = "button";
