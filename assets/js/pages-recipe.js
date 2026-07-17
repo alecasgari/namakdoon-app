@@ -67,6 +67,16 @@
     root.innerHTML = `
       <section class="recipe-hero reveal">
         <div class="panel recipe-title-block">
+          ${
+            window.NamakAPI.mediaUrl(recipe.image_url) ||
+            window.NamakAPI.mediaUrl(recipe.video_url)
+              ? `<div class="recipe-media">${
+                  window.NamakAPI.mediaUrl(recipe.image_url)
+                    ? `<img class="media-thumb" src="${escapeHtml(window.NamakAPI.mediaUrl(recipe.image_url))}" alt="${escapeHtml(recipe.title)}" />`
+                    : `<video class="media-thumb" src="${escapeHtml(window.NamakAPI.mediaUrl(recipe.video_url))}" controls playsinline></video>`
+                }</div>`
+              : ""
+          }
           <div class="recipe-card-top">
             <span class="meal-badge">${escapeHtml(recipe.meal_type || "وعده")}</span>
           </div>

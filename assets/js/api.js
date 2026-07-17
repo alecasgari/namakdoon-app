@@ -1,5 +1,5 @@
 (function () {
-  const { apiBase, endpoints, adminTokenKey } = window.NAMAKDOON;
+  const { apiBase, endpoints, adminTokenKey, mediaBase } = window.NAMAKDOON;
 
   function url(endpoint, query) {
     const u = new URL(`${apiBase}${endpoint}`);
@@ -18,6 +18,14 @@
   function setAdminToken(token) {
     if (token) sessionStorage.setItem(adminTokenKey, token);
     else sessionStorage.removeItem(adminTokenKey);
+  }
+
+  function mediaUrl(path) {
+    if (!path) return "";
+    if (/^https?:\/\//i.test(path)) return path;
+    const base = (mediaBase || "").replace(/\/$/, "");
+    const clean = String(path).replace(/^\//, "");
+    return `${base}/${clean}`;
   }
 
   async function request(endpoint, options = {}) {
@@ -85,6 +93,8 @@
       tips: row.tips || "",
       calories: Number(row.calories) || 0,
       difficulty: row.difficulty || "متوسط",
+      image_url: row.image_url || "",
+      video_url: row.video_url || "",
       created_at: row.createdAt || row.created_at || "",
       updated_at: row.updatedAt || row.updated_at || "",
     };
@@ -123,6 +133,7 @@
     getAdminToken,
     setAdminToken,
     verifyAdminToken,
+    mediaUrl,
     async listRecipes() {
       const data = await request(endpoints.list);
       const rows = Array.isArray(data) ? data : data?.recipes || data?.data || [];
@@ -133,13 +144,30 @@
       const row = data?.recipe || data?.data || data;
       return normalizeRecipe(row);
     },
-    async createRecipe({ text, audioBlob, filename }) {
+    async previewRecipe({ text, audioBlob, filename }) {
       const form = new FormData();
+      form.append("mode", "preview");
       if (text) form.append("text", text);
-      if (audioBlob) {
-        form.append("audio", audioBlob, filename || "recording.webm");
-      }
+      if (audioBlob) form.append("audio", audioBlob, filename || "recording.webm");
       return request(endpoints.create, {
+        method: "POST",
+        admin: true,
+        body: form,
+      });
+    },
+    async publishRecipe(payload) {
+      return request(endpoints.create, {
+        method: "POST",
+        admin: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "publish", ...payload }),
+      });
+    },
+    async uploadMedia(file, kind) {
+      const form = new FormData();
+      form.append("kind", kind || "image");
+      form.append("file", file, file.name || `${kind || "file"}.bin`);
+      return request(endpoints.upload, {
         method: "POST",
         admin: true,
         body: form,

@@ -37,10 +37,17 @@ CHANGE_ME_ADMIN_TOKEN
 - `workflows/04-namakdoon-update.json`
 - `workflows/05-namakdoon-delete.json`
 - `workflows/06-namakdoon-auth.json` ← برای چک کردن توکن قبل از ورود به پنل
+- `workflows/07-namakdoon-upload.json` ← آپلود عکس/ویدیو روی دیسک سرور
 
 3. در Create: Credential جمینای را به نودهای Gemini وصل کنید
-4. توکن ثابت را در هر ۴ ورکفلو ادمین یکسان کنید
-5. همه را **Active** کنید
+4. توکن ثابت را در همه ورکفلوهای ادمین یکسان کنید
+5. برای مدیا: `MEDIA.md` را بخوانید (فولدر + nginx)
+6. همه را **Active** کنید
+
+Create دو حالت دارد:
+
+- `mode=preview` → فقط ساخت دستور با AI (بدون ذخیره)
+- `mode=publish` → ذخیره دستور تأییدشده در Data Table
 
 ## آدرس وبهوک‌ها
 

@@ -104,6 +104,18 @@
               "name": "difficulty",
               "value": "={{ $json.body?.difficulty || $json.difficulty || 'متوسط' }}",
               "type": "string"
+            },
+            {
+              "id": "u15",
+              "name": "image_url",
+              "value": "={{ $json.body?.image_url || $json.image_url || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "u16",
+              "name": "video_url",
+              "value": "={{ $json.body?.video_url || $json.video_url || '' }}",
+              "type": "string"
             }
           ]
         },
@@ -199,7 +211,9 @@
             "tags": "={{ $json.tags }}",
             "tips": "={{ $json.tips }}",
             "calories": "={{ $json.calories }}",
-            "difficulty": "={{ $json.difficulty }}"
+            "difficulty": "={{ $json.difficulty }}",
+            "image_url": "={{ $json.image_url }}",
+            "video_url": "={{ $json.video_url }}"
           },
           "matchingColumns": [],
           "schema": [],

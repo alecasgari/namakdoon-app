@@ -21,6 +21,7 @@
     siteUrl,
     basePath,
     apiBase: "https://n8n.alecasgari.com/webhook",
+    mediaBase: "https://namakdoon.alecasgari.com/media",
     endpoints: {
       list: "/namakdoon-list",
       get: "/namakdoon-get",
@@ -28,6 +29,7 @@
       update: "/namakdoon-update",
       delete: "/namakdoon-delete",
       auth: "/namakdoon-auth",
+      upload: "/namakdoon-upload",
     },
     adminTokenKey: "namakdoon_admin_token",
   };

@@ -1,0 +1,156 @@
+{
+  "name": "Namakdoon - Upload Media",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "namakdoon-upload",
+        "responseMode": "responseNode",
+        "options": { "allowedOrigins": "*" }
+      },
+      "id": "upload-webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [220, 300],
+      "webhookId": "namakdoon-upload"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "u1",
+              "name": "adminToken",
+              "value": "={{ $json.headers['x-admin-token'] || $json.headers['X-Admin-Token'] || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "u2",
+              "name": "kind",
+              "value": "={{ $json.kind || $json.body?.kind || 'image' }}",
+              "type": "string"
+            },
+            {
+              "id": "u3",
+              "name": "fileName",
+              "value": "={{ Date.now() + '-' + (($binary.file?.fileName || 'media.bin').replace(/[^a-zA-Z0-9._-]/g, '_')) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": { "includeBinary": true }
+      },
+      "id": "upload-prepare",
+      "name": "Prepare Upload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "ua",
+              "leftValue": "={{ $json.adminToken }}",
+              "rightValue": "CHANGE_ME_ADMIN_TOKEN",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "upload-auth",
+      "name": "Auth OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"error\": \"دسترسی غیرمجاز\" } }}",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] }
+        }
+      },
+      "id": "upload-unauthorized",
+      "name": "Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 480]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/home/node/namakdoon-media/{{ $json.fileName }}",
+        "dataPropertyName": "file",
+        "options": {}
+      },
+      "id": "upload-write",
+      "name": "Write File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [960, 220]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "url",
+              "value": "=https://namakdoon.alecasgari.com/media/{{ $json.fileName }}",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "path",
+              "value": "={{ $json.fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "upload-url",
+      "name": "Build URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"url\": $json.url, \"path\": $json.path } }}",
+        "options": {
+          "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] }
+        }
+      },
+      "id": "upload-respond",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 220]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Prepare Upload", "type": "main", "index": 0 }]] },
+    "Prepare Upload": { "main": [[{ "node": "Auth OK?", "type": "main", "index": 0 }]] },
+    "Auth OK?": {
+      "main": [
+        [{ "node": "Write File", "type": "main", "index": 0 }],
+        [{ "node": "Unauthorized", "type": "main", "index": 0 }]
+      ]
+    },
+    "Write File": { "main": [[{ "node": "Build URL", "type": "main", "index": 0 }]] },
+    "Build URL": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

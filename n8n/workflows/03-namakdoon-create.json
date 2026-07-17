@@ -6,15 +6,13 @@
         "httpMethod": "POST",
         "path": "namakdoon-create",
         "responseMode": "responseNode",
-        "options": {
-          "allowedOrigins": "*"
-        }
+        "options": { "allowedOrigins": "*" }
       },
       "id": "create-webhook",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [200, 360],
+      "position": [180, 360],
       "webhookId": "namakdoon-create"
     },
     {
@@ -24,52 +22,54 @@
             {
               "id": "a1",
               "name": "adminToken",
-              "value": "={{ $json.headers['x-admin-token'] || $json.headers['X-Admin-Token'] || $json.adminToken || '' }}",
+              "value": "={{ $json.headers['x-admin-token'] || $json.headers['X-Admin-Token'] || $json.adminToken || $json.body?.adminToken || '' }}",
               "type": "string"
             },
             {
               "id": "a2",
+              "name": "mode",
+              "value": "={{ $json.mode || $json.body?.mode || 'preview' }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
               "name": "text",
               "value": "={{ $json.text || $json.body?.text || '' }}",
               "type": "string"
             },
             {
-              "id": "a3",
+              "id": "a4",
               "name": "hasAudio",
               "value": "={{ !!$binary?.audio }}",
               "type": "boolean"
+            },
+            {
+              "id": "a5",
+              "name": "raw",
+              "value": "={{ $json.body || $json }}",
+              "type": "object"
             }
           ]
         },
         "includeOtherFields": true,
-        "options": {
-          "includeBinary": true
-        }
+        "options": { "includeBinary": true }
       },
       "id": "create-prepare",
       "name": "Prepare Input",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [420, 360]
+      "position": [400, 360]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
           "conditions": [
             {
               "id": "c-auth",
               "leftValue": "={{ $json.adminToken }}",
               "rightValue": "CHANGE_ME_ADMIN_TOKEN",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+              "operator": { "type": "string", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -80,7 +80,7 @@
       "name": "Auth OK?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [640, 360]
+      "position": [620, 360]
     },
     {
       "parameters": {
@@ -88,41 +88,76 @@
         "responseBody": "={{ { \"error\": \"دسترسی غیرمجاز\" } }}",
         "options": {
           "responseCode": 401,
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Access-Control-Allow-Origin",
-                "value": "*"
-              }
-            ]
-          }
+          "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] }
         }
       },
       "id": "create-unauthorized",
       "name": "Unauthorized",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [880, 560]
+      "position": [860, 560]
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 2
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "c-pub",
+              "leftValue": "={{ $json.mode }}",
+              "rightValue": "publish",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "create-is-publish",
+      "name": "Is Publish?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [860, 280]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "p1", "name": "slug", "value": "={{ $json.raw.slug || ('recipe-' + Date.now()) }}", "type": "string" },
+            { "id": "p2", "name": "title", "value": "={{ $json.raw.title }}", "type": "string" },
+            { "id": "p3", "name": "description", "value": "={{ $json.raw.description || '' }}", "type": "string" },
+            { "id": "p4", "name": "ingredients", "value": "={{ typeof $json.raw.ingredients === 'string' ? $json.raw.ingredients : JSON.stringify($json.raw.ingredients || []) }}", "type": "string" },
+            { "id": "p5", "name": "steps", "value": "={{ typeof $json.raw.steps === 'string' ? $json.raw.steps : JSON.stringify($json.raw.steps || []) }}", "type": "string" },
+            { "id": "p6", "name": "prep_time", "value": "={{ Number($json.raw.prep_time) || 0 }}", "type": "number" },
+            { "id": "p7", "name": "cook_time", "value": "={{ Number($json.raw.cook_time) || 0 }}", "type": "number" },
+            { "id": "p8", "name": "servings_base", "value": "={{ Number($json.raw.servings_base) || 4 }}", "type": "number" },
+            { "id": "p9", "name": "meal_type", "value": "={{ $json.raw.meal_type || '' }}", "type": "string" },
+            { "id": "p10", "name": "tags", "value": "={{ typeof $json.raw.tags === 'string' ? $json.raw.tags : JSON.stringify($json.raw.tags || []) }}", "type": "string" },
+            { "id": "p11", "name": "tips", "value": "={{ $json.raw.tips || '' }}", "type": "string" },
+            { "id": "p12", "name": "calories", "value": "={{ Number($json.raw.calories) || 0 }}", "type": "number" },
+            { "id": "p13", "name": "difficulty", "value": "={{ $json.raw.difficulty || 'متوسط' }}", "type": "string" },
+            { "id": "p14", "name": "image_url", "value": "={{ $json.raw.image_url || '' }}", "type": "string" },
+            { "id": "p15", "name": "video_url", "value": "={{ $json.raw.video_url || '' }}", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-map-publish",
+      "name": "Map Publish Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1100, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose", "version": 2 },
           "conditions": [
             {
               "id": "c-audio",
               "leftValue": "={{ $json.hasAudio }}",
               "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
             }
           ],
           "combinator": "and"
@@ -133,30 +168,24 @@
       "name": "Has Audio?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [880, 280]
+      "position": [1100, 380]
     },
     {
       "parameters": {
         "resource": "audio",
         "operation": "analyze",
-        "modelId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "models/gemini-flash-lite-latest"
-        },
+        "modelId": { "__rl": true, "mode": "id", "value": "models/gemini-flash-lite-latest" },
         "text": "این فایل صوتی را کامل به متن فارسی پیاده‌سازی کن. اگر محتوا انگلیسی بود، به فارسی برگردان. فقط متن گفت‌وگو یا دستور را برگردان.",
         "inputType": "binary",
         "binaryPropertyName": "audio",
         "simplify": true,
-        "options": {
-          "maxOutputTokens": 4096
-        }
+        "options": { "maxOutputTokens": 4096 }
       },
       "id": "create-analyze",
       "name": "Analyze Audio",
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.1,
-      "position": [1120, 160],
+      "position": [1340, 280],
       "credentials": {
         "googlePalmApi": {
           "id": "REPLACE_WITH_YOUR_GEMINI_CREDENTIAL_ID",
@@ -182,18 +211,13 @@
       "name": "Source From Audio",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1360, 160]
+      "position": [1580, 280]
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
-            {
-              "id": "s2",
-              "name": "sourceText",
-              "value": "={{ $json.text }}",
-              "type": "string"
-            }
+            { "id": "s2", "name": "sourceText", "value": "={{ $json.text }}", "type": "string" }
           ]
         },
         "options": {}
@@ -202,17 +226,13 @@
       "name": "Source From Text",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1120, 360]
+      "position": [1340, 460]
     },
     {
       "parameters": {
         "resource": "text",
         "operation": "message",
-        "modelId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "models/gemini-flash-lite-latest"
-        },
+        "modelId": { "__rl": true, "mode": "id", "value": "models/gemini-flash-lite-latest" },
         "messages": {
           "values": [
             {
@@ -229,7 +249,7 @@
       "name": "Structure Recipe",
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.1,
-      "position": [1580, 260],
+      "position": [1800, 360],
       "credentials": {
         "googlePalmApi": {
           "id": "REPLACE_WITH_YOUR_GEMINI_CREDENTIAL_ID",
@@ -255,108 +275,55 @@
       "name": "Parse JSON",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1800, 260]
+      "position": [2020, 360]
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
-            {
-              "id": "r1",
-              "name": "slug",
-              "value": "={{ $json.parsed.slug || ('recipe-' + Date.now()) }}",
-              "type": "string"
-            },
-            {
-              "id": "r2",
-              "name": "title",
-              "value": "={{ $json.parsed.title }}",
-              "type": "string"
-            },
-            {
-              "id": "r3",
-              "name": "description",
-              "value": "={{ $json.parsed.description || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "r4",
-              "name": "ingredients",
-              "value": "={{ JSON.stringify($json.parsed.ingredients || []) }}",
-              "type": "string"
-            },
-            {
-              "id": "r5",
-              "name": "steps",
-              "value": "={{ JSON.stringify($json.parsed.steps || []) }}",
-              "type": "string"
-            },
-            {
-              "id": "r6",
-              "name": "prep_time",
-              "value": "={{ Number($json.parsed.prep_time) || 0 }}",
-              "type": "number"
-            },
-            {
-              "id": "r7",
-              "name": "cook_time",
-              "value": "={{ Number($json.parsed.cook_time) || 0 }}",
-              "type": "number"
-            },
-            {
-              "id": "r8",
-              "name": "servings_base",
-              "value": "={{ Number($json.parsed.servings_base) || 4 }}",
-              "type": "number"
-            },
-            {
-              "id": "r9",
-              "name": "meal_type",
-              "value": "={{ $json.parsed.meal_type || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "r10",
-              "name": "tags",
-              "value": "={{ JSON.stringify($json.parsed.tags || []) }}",
-              "type": "string"
-            },
-            {
-              "id": "r11",
-              "name": "tips",
-              "value": "={{ $json.parsed.tips || '' }}",
-              "type": "string"
-            },
-            {
-              "id": "r12",
-              "name": "calories",
-              "value": "={{ Number($json.parsed.calories) || 0 }}",
-              "type": "number"
-            },
-            {
-              "id": "r13",
-              "name": "difficulty",
-              "value": "={{ $json.parsed.difficulty || 'متوسط' }}",
-              "type": "string"
-            }
+            { "id": "r1", "name": "slug", "value": "={{ $json.parsed.slug || ('recipe-' + Date.now()) }}", "type": "string" },
+            { "id": "r2", "name": "title", "value": "={{ $json.parsed.title }}", "type": "string" },
+            { "id": "r3", "name": "description", "value": "={{ $json.parsed.description || '' }}", "type": "string" },
+            { "id": "r4", "name": "ingredients", "value": "={{ $json.parsed.ingredients || [] }}", "type": "array" },
+            { "id": "r5", "name": "steps", "value": "={{ $json.parsed.steps || [] }}", "type": "array" },
+            { "id": "r6", "name": "prep_time", "value": "={{ Number($json.parsed.prep_time) || 0 }}", "type": "number" },
+            { "id": "r7", "name": "cook_time", "value": "={{ Number($json.parsed.cook_time) || 0 }}", "type": "number" },
+            { "id": "r8", "name": "servings_base", "value": "={{ Number($json.parsed.servings_base) || 4 }}", "type": "number" },
+            { "id": "r9", "name": "meal_type", "value": "={{ $json.parsed.meal_type || '' }}", "type": "string" },
+            { "id": "r10", "name": "tags", "value": "={{ $json.parsed.tags || [] }}", "type": "array" },
+            { "id": "r11", "name": "tips", "value": "={{ $json.parsed.tips || '' }}", "type": "string" },
+            { "id": "r12", "name": "calories", "value": "={{ Number($json.parsed.calories) || 0 }}", "type": "number" },
+            { "id": "r13", "name": "difficulty", "value": "={{ $json.parsed.difficulty || 'متوسط' }}", "type": "string" },
+            { "id": "r14", "name": "image_url", "value": "", "type": "string" },
+            { "id": "r15", "name": "video_url", "value": "", "type": "string" }
           ]
         },
         "options": {}
       },
-      "id": "create-map",
-      "name": "Map Recipe Fields",
+      "id": "create-map-preview",
+      "name": "Map Preview Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [2020, 260]
+      "position": [2240, 360]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"preview\": true, \"recipe\": $json } }}",
+        "options": {
+          "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] }
+        }
+      },
+      "id": "create-respond-preview",
+      "name": "Respond Preview",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2460, 360]
     },
     {
       "parameters": {
         "operation": "insert",
-        "dataTableId": {
-          "__rl": true,
-          "mode": "name",
-          "value": "namakdoon_recipes"
-        },
+        "dataTableId": { "__rl": true, "mode": "name", "value": "namakdoon_recipes" },
         "columns": {
           "mappingMode": "autoMapInputData",
           "value": {},
@@ -371,72 +338,52 @@
       "name": "Insert Recipe",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
-      "position": [2240, 260]
+      "position": [1340, 160]
     },
     {
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { \"ok\": true, \"recipe\": $json } }}",
         "options": {
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Access-Control-Allow-Origin",
-                "value": "*"
-              }
-            ]
-          }
+          "responseHeaders": { "entries": [{ "name": "Access-Control-Allow-Origin", "value": "*" }] }
         }
       },
       "id": "create-respond",
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2460, 260]
+      "position": [1580, 160]
     }
   ],
   "connections": {
-    "Webhook": {
-      "main": [[{ "node": "Prepare Input", "type": "main", "index": 0 }]]
-    },
-    "Prepare Input": {
-      "main": [[{ "node": "Auth OK?", "type": "main", "index": 0 }]]
-    },
+    "Webhook": { "main": [[{ "node": "Prepare Input", "type": "main", "index": 0 }]] },
+    "Prepare Input": { "main": [[{ "node": "Auth OK?", "type": "main", "index": 0 }]] },
     "Auth OK?": {
       "main": [
-        [{ "node": "Has Audio?", "type": "main", "index": 0 }],
+        [{ "node": "Is Publish?", "type": "main", "index": 0 }],
         [{ "node": "Unauthorized", "type": "main", "index": 0 }]
       ]
     },
+    "Is Publish?": {
+      "main": [
+        [{ "node": "Map Publish Fields", "type": "main", "index": 0 }],
+        [{ "node": "Has Audio?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Map Publish Fields": { "main": [[{ "node": "Insert Recipe", "type": "main", "index": 0 }]] },
+    "Insert Recipe": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
     "Has Audio?": {
       "main": [
         [{ "node": "Analyze Audio", "type": "main", "index": 0 }],
         [{ "node": "Source From Text", "type": "main", "index": 0 }]
       ]
     },
-    "Analyze Audio": {
-      "main": [[{ "node": "Source From Audio", "type": "main", "index": 0 }]]
-    },
-    "Source From Audio": {
-      "main": [[{ "node": "Structure Recipe", "type": "main", "index": 0 }]]
-    },
-    "Source From Text": {
-      "main": [[{ "node": "Structure Recipe", "type": "main", "index": 0 }]]
-    },
-    "Structure Recipe": {
-      "main": [[{ "node": "Parse JSON", "type": "main", "index": 0 }]]
-    },
-    "Parse JSON": {
-      "main": [[{ "node": "Map Recipe Fields", "type": "main", "index": 0 }]]
-    },
-    "Map Recipe Fields": {
-      "main": [[{ "node": "Insert Recipe", "type": "main", "index": 0 }]]
-    },
-    "Insert Recipe": {
-      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
-    }
+    "Analyze Audio": { "main": [[{ "node": "Source From Audio", "type": "main", "index": 0 }]] },
+    "Source From Audio": { "main": [[{ "node": "Structure Recipe", "type": "main", "index": 0 }]] },
+    "Source From Text": { "main": [[{ "node": "Structure Recipe", "type": "main", "index": 0 }]] },
+    "Structure Recipe": { "main": [[{ "node": "Parse JSON", "type": "main", "index": 0 }]] },
+    "Parse JSON": { "main": [[{ "node": "Map Preview Fields", "type": "main", "index": 0 }]] },
+    "Map Preview Fields": { "main": [[{ "node": "Respond Preview", "type": "main", "index": 0 }]] }
   },
-  "settings": {
-    "executionOrder": "v1"
-  }
+  "settings": { "executionOrder": "v1" }
 }

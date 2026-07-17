@@ -86,9 +86,17 @@
       .slice(0, 3)
       .map((t) => `<span class="chip">${escapeHtml(t)}</span>`)
       .join("");
+    const image = window.NamakAPI.mediaUrl(recipe.image_url);
+    const video = window.NamakAPI.mediaUrl(recipe.video_url);
+    const media = image
+      ? `<div class="recipe-card-media"><img src="${escapeHtml(image)}" alt="${escapeHtml(recipe.title)}" loading="lazy" /></div>`
+      : video
+        ? `<div class="recipe-card-media"><video src="${escapeHtml(video)}" muted playsinline preload="metadata"></video></div>`
+        : "";
     return `
       <article class="recipe-card reveal" data-id="${escapeHtml(recipe.id)}">
         <a class="recipe-card-link" href="${href}">
+          ${media}
           <div class="recipe-card-top">
             <span class="meal-badge">${escapeHtml(recipe.meal_type || "وعده")}</span>
           </div>

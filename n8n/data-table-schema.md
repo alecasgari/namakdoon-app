@@ -17,6 +17,8 @@
 | `tips` | string | نکات |
 | `calories` | number | کالری تقریبی هر نفر |
 | `difficulty` | string | آسان / متوسط / سخت |
+| `image_url` | string | آدرس عکس (اختیاری) |
+| `video_url` | string | آدرس ویدیو (اختیاری) |
 
 ستون‌های سیستمی `id`, `createdAt`, `updatedAt` خودکار ساخته می‌شوند.
 
