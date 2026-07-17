@@ -72,7 +72,7 @@
           </div>
           <h1>${escapeHtml(recipe.title)}</h1>
           <p>${escapeHtml(recipe.description || "")}</p>
-          <div class="chip-row" style="margin-top:1rem">
+          <div class="chip-row" style="margin-top:.55rem">
             ${(recipe.tags || []).map((t) => `<span class="chip">${escapeHtml(t)}</span>`).join("")}
           </div>
         </div>
